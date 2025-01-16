@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include <stdbool.h>
 
 #define BUFFER_SZ 50
 
@@ -17,7 +17,43 @@ int  count_words(char *, int, int);
 
 int setup_buff(char *buff, char *user_str, int len){
     //TODO: #4:  Implement the setup buff as per the directions
-    return 0; //for now just so the code compiles. 
+    char *input_ptr = user_str;    //pointer to traverse input string
+    char *buffer_ptr = buff;       //pointer for buffer
+    int characters_copied = 0;     //track # of valid characters
+    int is_whitespace = 0;         //track whitespace
+
+    while (*input_ptr != '\0') {
+        // check if buffer is full
+        if (characters_copied >= len) {
+            return -1;
+        }
+
+        // Handle whitespace
+        if (*input_ptr == ' ' || *input_ptr == '\t') {
+            if (!is_whitespace) {
+                *buffer_ptr = ' ';  // add single space
+                buffer_ptr++;
+                characters_copied++;
+                is_whitespace = 1;  // mark that whitespace has been added
+            }
+        } else {
+            *buffer_ptr = *input_ptr;  // copy non-whitespace character
+            buffer_ptr++;
+            characters_copied++;
+            is_whitespace = 0;        // reset is_whitespace
+        }
+
+        input_ptr++;  // move to the next character in the input string
+    }
+
+    // fill the remaining buffer with periods
+    while (characters_copied < len) {
+        *buffer_ptr = '.';
+        buffer_ptr++;
+        characters_copied++;
+    }
+
+    return characters_copied;  // total characters written to buffer
 }
 
 void print_buff(char *buff, int len){
@@ -35,7 +71,26 @@ void usage(char *exename){
 
 int count_words(char *buff, int len, int str_len){
     //YOU MUST IMPLEMENT
-    return 0;
+    char *ptr = buff;
+    int wc = 0;
+    bool word_started = false;
+    int i = 0;
+
+    while (i < str_len) {
+        if (*ptr != ' ') {
+            if (!word_started) {
+                wc++;
+                word_started = true;
+            }
+        } else {
+            word_started = false;
+        }
+
+        ptr++;
+        i++;
+    }
+
+    return wc;
 }
 
 //ADD OTHER HELPER FUNCTIONS HERE FOR OTHER REQUIRED PROGRAM OPTIONS
@@ -50,6 +105,8 @@ int main(int argc, char *argv[]){
 
     //TODO:  #1. WHY IS THIS SAFE, aka what if arv[1] does not exist?
     //      PLACE A COMMENT BLOCK HERE EXPLAINING
+    //  This is safe becuase it ensures that there are at least 2 arguments so that when argv[1] is accessed,
+    //  there exists a value, and won't result in undefined behavior.
     if ((argc < 2) || (*argv[1] != '-')){
         usage(argv[0]);
         exit(1);
@@ -67,6 +124,7 @@ int main(int argc, char *argv[]){
 
     //TODO:  #2 Document the purpose of the if statement below
     //      PLACE A COMMENT BLOCK HERE EXPLAINING
+    //  Ensures that the input has at least 3 arguments which is necessary for all commands
     if (argc < 3){
         usage(argv[0]);
         exit(1);
@@ -78,6 +136,11 @@ int main(int argc, char *argv[]){
     //          handle error if malloc fails by exiting with a 
     //          return code of 99
     // CODE GOES HERE FOR #3
+
+    buff = (char *)malloc(BUFFER_SZ);
+    if (buff == NULL) {
+        exit(99);
+    }
 
 
     user_str_len = setup_buff(buff, input_string, BUFFER_SZ);     //see todos
