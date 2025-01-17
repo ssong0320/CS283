@@ -84,18 +84,20 @@ void usage(char *exename){
 
 int count_words(char *buff, int len, int str_len){
     //YOU MUST IMPLEMENT
-    char *ptr = buff;
+    char *ptr = buff;  // pointer to traverse uff
     int wc = 0;
-    bool word_started = false;
-    int i = 0;
+    bool word_started = false;  //track if in word
+    int i = 0;  // loop counter
 
     while (i < str_len) {
+        // Check if the current character is part of a word
         if (*ptr != ' ' && *ptr != '.') {
             if (!word_started) {
                 wc++;
                 word_started = true;
             }
         } else {
+            // Mark that we are outside a word
             word_started = false;
         }
 
@@ -136,12 +138,13 @@ void print_words(char *buff, int user_str_len) {
     printf("Word Print\n");
     printf("----------\n");
 
-    char *ptr = buff;
-    int word_index = 1;
-    int word_length = 0;
-    bool in_word = false;
+    char *ptr = buff;  // Pointer to traverse the buff
+    int word_index = 1;  // Track the index of each word
+    int word_length = 0;  // Track the length of the current word
+    bool in_word = false;  // Track if we are inside a word
 
     for (int i = 0; i < user_str_len; i++) {
+        // Check if the current character is part of a word
         if (*ptr != ' ' && *ptr != '.') {
             if (!in_word) {
                 printf("%d. ", word_index++);
@@ -150,6 +153,7 @@ void print_words(char *buff, int user_str_len) {
             putchar(*ptr);
             word_length++;
         } else {
+            // If the current word ends, print its length
             if (in_word) {
                 printf("(%d)\n", word_length);
                 word_length = 0;
