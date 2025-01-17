@@ -269,3 +269,8 @@ int main(int argc, char *argv[]){
 //          the buff variable will have exactly 50 bytes?
 //  
 //          PLACE YOUR ANSWER HERE
+
+//Providing both the buffer pointer and its length ensures the functions
+//operate only on the intended portion of the buffer, 
+//preventing overflows and undefined behavior. It also makes the code 
+//more modular and adaptable to changes in buffer size or partial operations.
