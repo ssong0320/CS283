@@ -13,6 +13,8 @@ int  setup_buff(char *, char *, int);
 //prototypes for functions to handle required functionality
 int  count_words(char *, int, int);
 //add additional prototypes here
+void reverse_string(char *buff, int user_str_len);
+void print_words(char *buff, int user_str_len);
 
 
 int setup_buff(char *buff, char *user_str, int len){
@@ -21,6 +23,11 @@ int setup_buff(char *buff, char *user_str, int len){
     char *buffer_ptr = buff;       //pointer for buffer
     int characters_copied = 0;     //track # of valid characters
     int is_whitespace = 0;         //track whitespace
+
+    // Skip leading spaces
+    while (*input_ptr == ' ' || *input_ptr == '\t') {
+        input_ptr++;
+    }
 
     while (*input_ptr != '\0') {
         // check if buffer is full
@@ -46,6 +53,12 @@ int setup_buff(char *buff, char *user_str, int len){
         input_ptr++;  // move to the next character in the input string
     }
 
+    // Remove trailing space
+    if (characters_copied > 0 && *(buffer_ptr - 1) == ' ') {
+        buffer_ptr--;
+        characters_copied--;
+    }
+
     // fill the remaining buffer with periods
     while (characters_copied < len) {
         *buffer_ptr = '.';
@@ -57,11 +70,11 @@ int setup_buff(char *buff, char *user_str, int len){
 }
 
 void print_buff(char *buff, int len){
-    printf("Buffer:  ");
+    printf("Buffer:  [");
     for (int i=0; i<len; i++){
         putchar(*(buff+i));
     }
-    putchar('\n');
+    printf("]\n");
 }
 
 void usage(char *exename){
@@ -77,7 +90,7 @@ int count_words(char *buff, int len, int str_len){
     int i = 0;
 
     while (i < str_len) {
-        if (*ptr != ' ') {
+        if (*ptr != ' ' && *ptr != '.') {
             if (!word_started) {
                 wc++;
                 word_started = true;
@@ -94,6 +107,66 @@ int count_words(char *buff, int len, int str_len){
 }
 
 //ADD OTHER HELPER FUNCTIONS HERE FOR OTHER REQUIRED PROGRAM OPTIONS
+void reverse_string(char *buff, int user_str_len) {
+    char *start = buff;
+    char *end = buff + user_str_len - 1;
+    char temp;
+
+    // Reverse the user string in place
+    while (start < end) {
+        temp = *start;
+        *start = *end;
+        *end = temp;
+        start++;
+        end--;
+    }
+
+    // Print only the reversed user string
+    printf("Reversed String: ");
+    for (int i = 0; i < user_str_len; i++) {
+        if (buff[i] != '.') {
+            putchar(buff[i]);
+        }
+    }
+    putchar('\n');
+}
+
+
+void print_words(char *buff, int user_str_len) {
+    printf("Word Print\n");
+    printf("----------\n");
+
+    char *ptr = buff;
+    int word_index = 1;
+    int word_length = 0;
+    bool in_word = false;
+
+    for (int i = 0; i < user_str_len; i++) {
+        if (*ptr != ' ' && *ptr != '.') {
+            if (!in_word) {
+                printf("%d. ", word_index++);
+                in_word = true;
+            }
+            putchar(*ptr);
+            word_length++;
+        } else {
+            if (in_word) {
+                printf("(%d)\n", word_length);
+                word_length = 0;
+                in_word = false;
+            }
+        }
+        ptr++;
+    }
+
+    // Print the last word if the string does not end with a space
+    if (in_word) {
+        printf("(%d)\n", word_length);
+    }
+
+    printf("\nNumber of words returned: %d\n", word_index-1);
+}
+
 
 int main(int argc, char *argv[]){
 
@@ -139,7 +212,7 @@ int main(int argc, char *argv[]){
 
     buff = (char *)malloc(BUFFER_SZ);
     if (buff == NULL) {
-        exit(99);
+        exit(3);
     }
 
 
@@ -161,6 +234,23 @@ int main(int argc, char *argv[]){
 
         //TODO:  #5 Implement the other cases for 'r' and 'w' by extending
         //       the case statement options
+        case 'r':
+            reverse_string(buff, user_str_len);
+            break;
+
+        case 'w':
+            print_words(buff, user_str_len);
+            break;
+
+        case 'x':
+            if (argc != 5) {
+                usage(argv[0]);
+                exit(1);
+
+            }
+            printf("Not Implemented!\n");
+            exit(2);
+
         default:
             usage(argv[0]);
             exit(1);
@@ -168,6 +258,7 @@ int main(int argc, char *argv[]){
 
     //TODO:  #6 Dont forget to free your buffer before exiting
     print_buff(buff,BUFFER_SZ);
+    free(buff);
     exit(0);
 }
 
