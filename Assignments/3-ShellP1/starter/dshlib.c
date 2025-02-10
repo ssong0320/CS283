@@ -34,6 +34,49 @@
  */
 int build_cmd_list(char *cmd_line, command_list_t *clist)
 {
-    printf(M_NOT_IMPL);
-    return EXIT_NOT_IMPL;
+    // check if emtpy
+    if (strlen(cmd_line) == 0)
+    {
+        return WARN_NO_CMDS;
+    }
+
+    memset(clist, 0, sizeof(command_list_t));
+
+    char *token;
+    char *cmds[CMD_MAX];
+    int count = 0;
+
+    // Tokenize input based on '|'
+    token = strtok(cmd_line, PIPE_STRING);
+    while (token != NULL)
+    {
+        if (count >= CMD_MAX)
+        {
+            return ERR_TOO_MANY_COMMANDS;
+        }
+        cmds[count++] = token;
+        token = strtok(NULL, PIPE_STRING);
+    }
+
+    clist->num = count;
+    for (int i = 0; i < count; i++)
+    {
+        char *cmd = cmds[i];
+        while (*cmd == SPACE_CHAR) // Trim leading spaces
+            cmd++;
+
+        char *space = strchr(cmd, SPACE_CHAR);
+        if (space)
+        {
+            *space = '\0'; // Split command and arguments
+            strncpy(clist->commands[i].exe, cmd, EXE_MAX - 1);
+            strncpy(clist->commands[i].args, space + 1, ARG_MAX - 1);
+        }
+        else
+        {
+            strncpy(clist->commands[i].exe, cmd, EXE_MAX - 1);
+        }
+    }
+
+    return OK;
 }
