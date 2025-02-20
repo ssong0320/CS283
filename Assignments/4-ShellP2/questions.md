@@ -35,11 +35,7 @@
 - Find and describe three commonly used signals (e.g., SIGKILL, SIGTERM, SIGINT). What are their typical use cases?
 
     > **Answer**:  
-    SIGKILL (Signal 9) – This forcefully stops a process immediately and can’t be ignored or handled. It’s used when a process won’t stop normally, like with kill -9 <pid>.
-
-    SIGTERM (Signal 15) – This is the default way to ask a process to stop nicely, so it can clean up before quitting. Unlike SIGKILL, the process can catch this and decide what to do.
-    
-    SIGINT (Signal 2) – This happens when you press Ctrl+C in the terminal, telling a program to stop. Programs can catch this signal and handle it differently instead of just quitting.
+    SIGKILL (Signal 9) – This forcefully stops a process immediately and can’t be ignored or handled. It’s used when a process won’t stop normally, like with kill -9 <pid>. SIGTERM (Signal 15) – This is the default way to ask a process to stop nicely, so it can clean up before quitting. Unlike SIGKILL, the process can catch this and decide what to do SIGINT (Signal 2) – This happens when you press Ctrl+C in the terminal, telling a program to stop. Programs can catch this signal and handle it differently instead of just quitting.
 
 - What happens when a process receives SIGSTOP? Can it be caught or ignored like SIGINT? Why or why not?
 
