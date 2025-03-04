@@ -7,6 +7,7 @@
 #########################################
 #  Basic command execution tests
 #########################################
+
 @test "Check if ls runs without errors" {
     run ./dsh <<EOF
 ls
@@ -19,9 +20,8 @@ EOF
 pwd
 EOF
     [ "$status" -eq 0 ]
-    
+
     result=$(echo "$output" | grep -E '^/' | head -n1)
-    echo "Extracted result: $result"  # Debugging info
     [[ "$result" =~ ^/ ]]
 }
 
@@ -38,8 +38,8 @@ ls | grep dshlib.c
 EOF
     [ "$status" -eq 0 ]
     
-    result=$(echo "$output" | grep "dshlib.c" | tail -n1)
-    echo "Extracted result: $result"  # Debugging info
+    result=$(echo "$output" | grep "dshlib.c" | head -n1)  # Extract only the relevant line
+    echo "Extracted result: $result"
     [[ "$result" =~ "dshlib.c" ]]
 }
 
@@ -48,9 +48,9 @@ EOF
 echo hello | wc -w
 EOF
     [ "$status" -eq 0 ]
-    
-    result=$(echo "$output" | awk '/^[0-9]+$/{print $1}' | tail -n1)
-    echo "Extracted result: $result"  # Debugging info
+
+    result=$(echo "$output" | awk '/^[0-9]+$/{print $1}' | head -n1)
+    echo "Extracted result: $result"
     [ "$result" -eq 1 ]
 }
 
@@ -59,13 +59,17 @@ EOF
 ls | grep .c | wc -l
 EOF
     [ "$status" -eq 0 ]
-    [[ "$(echo "$output" | tail -n1 | awk '{print $NF}')" =~ ^[0-9]+$ ]]
+
+    result=$(echo "$output" | grep -Eo '^[0-9]+$' | head -n1)
+    echo "Extracted result: $result"
+    [[ "$result" =~ ^[0-9]+$ ]]
 }
 
 @test "Check if invalid command returns an error" {
     run ./dsh <<EOF
 invalidcommand
 EOF
+
     [[ "$output" =~ "execvp failed" ]]  # Ensure the error message appears
 }
 
@@ -75,15 +79,63 @@ cd /tmp
 pwd
 EOF
     [ "$status" -eq 0 ]
-    
-    result=$(echo "$output" | grep -E '^/' | tail -n1)
-    echo "Extracted result: $result"  # Debugging info
+
+    result=$(echo "$output" | grep -E '^/' | head -n1)
+    echo "Extracted result: $result"
     [[ "$result" == "/tmp" ]]
 }
 
 @test "Check if exit terminates the shell correctly" {
     run ./dsh <<EOF
 exit
+EOF
+    [ "$status" -eq 0 ]
+
+    result=$(echo "$output" | grep "cmd loop returned" | head -n1)
+    echo "Extracted result: $result"
+    [[ "$result" =~ "cmd loop returned" ]]
+}
+
+@test "Check if echo prints the correct message" {
+    run ./dsh <<EOF
+echo Hello, world!
+EOF
+    [ "$status" -eq 0 ]
+
+    result=$(echo "$output" | grep "Hello, world!" | head -n1)
+    echo "Extracted result: $result"
+    [[ "$result" == "Hello, world!" ]]
+}
+
+@test "Check if multiple commands execute in sequence" {
+    run ./dsh <<EOF
+echo first
+echo second
+EOF
+    [ "$status" -eq 0 ]
+
+    result=$(echo "$output" | grep -E "first|second" | wc -l)
+    echo "Extracted result: $result"
+    [ "$result" -eq 2 ]  # Expecting two lines of output
+}
+
+
+@test "Check if output redirection works" {
+    run ./dsh <<EOF
+echo "File test" > test_output.txt
+cat test_output.txt
+EOF
+    [ "$status" -eq 0 ]
+
+    result=$(echo "$output" | grep "File test" | head -n1)
+    echo "Extracted result: $result"
+    [[ "$result" == "File test" ]]
+}
+
+
+@test "Check if shell handles empty input" {
+    run ./dsh <<EOF
+
 EOF
     [ "$status" -eq 0 ]
 }
