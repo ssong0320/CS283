@@ -275,7 +275,6 @@ int exec_client_requests(int cli_socket)
     int io_size;
     command_list_t cmd_list;
     int rc;
-    int cmd_rc;
     char *io_buff;
 
     io_buff = malloc(RDSH_COMM_BUFF_SZ);
@@ -297,7 +296,7 @@ int exec_client_requests(int cli_socket)
             }
             received += io_size;
 
-            if (io_buff[received - 1] == '\0')
+            if (io_buff[received - 1] == '\0') // Null terminator received
                 break;
         }
 
@@ -312,7 +311,7 @@ int exec_client_requests(int cli_socket)
             send_message_string(cli_socket, "Server shutting down...");
             send_message_eof(cli_socket);
             free(io_buff);
-            return OK_EXIT; // Tell the server to shut down
+            return OK_EXIT;
         }
 
         if (strcmp(io_buff, "exit") == 0)
@@ -320,29 +319,18 @@ int exec_client_requests(int cli_socket)
             send_message_string(cli_socket, "Client disconnecting...");
             send_message_eof(cli_socket);
             free(io_buff);
-            return OK; // Allow client to disconnect
+            return OK;
         }
 
         rc = build_cmd_list(io_buff, &cmd_list);
         if (rc != OK)
         {
-            free(io_buff);
             send_message_eof(cli_socket);
+            free(io_buff);
             return rc;
         }
 
-        cmd_rc = rsh_execute_pipeline(cli_socket, &cmd_list);
-
-        if (cmd_rc == BI_CMD_EXIT) // Handle client exit command
-        {
-            free(io_buff);
-            return OK;
-        }
-        if (cmd_rc == BI_CMD_STOP_SVR) // Handle stop-server
-        {
-            free(io_buff);
-            return OK_EXIT;
-        }
+        rsh_execute_pipeline(cli_socket, &cmd_list);
 
         send_message_eof(cli_socket);
     }

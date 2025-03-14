@@ -95,7 +95,6 @@ int exec_remote_cmd_loop(char *address, int port)
     ssize_t io_size;
     int is_eof;
 
-    // TODO set up cmd and response buffs
     cmd_buff = malloc(RDSH_COMM_BUFF_SZ);
     rsp_buff = malloc(RDSH_COMM_BUFF_SZ);
     if (!cmd_buff || !rsp_buff)
@@ -113,29 +112,27 @@ int exec_remote_cmd_loop(char *address, int port)
 
     while (1)
     {
-        // TODO print prompt
         printf("%s", SH_PROMPT);
         fflush(stdout);
 
-        // TODO fgets input
         if (fgets(cmd_buff, RDSH_COMM_BUFF_SZ, stdin) == NULL)
         {
             printf("\n");
             break;
         }
 
-        // Remove trailing newline
+        // Remove trailing newline and add null terminator
         cmd_buff[strcspn(cmd_buff, "\n")] = '\0';
+        size_t send_size = strlen(cmd_buff) + 1; // Include null terminator
 
-        // TODO send() over cli_socket
-        io_size = send(cli_socket, cmd_buff, strlen(cmd_buff), 0);
+        io_size = send(cli_socket, cmd_buff, send_size, 0);
         if (io_size < 0)
         {
             perror("send");
             return client_cleanup(cli_socket, cmd_buff, rsp_buff, ERR_RDSH_COMMUNICATION);
         }
 
-        // TODO recv all the results
+        // Receive response from server
         while (1)
         {
             io_size = recv(cli_socket, rsp_buff, RDSH_COMM_BUFF_SZ - 1, 0);
@@ -150,11 +147,11 @@ int exec_remote_cmd_loop(char *address, int port)
                 return client_cleanup(cli_socket, cmd_buff, rsp_buff, ERR_RDSH_COMMUNICATION);
             }
 
-            rsp_buff[io_size] = '\0'; // Null terminate the received data
+            rsp_buff[io_size] = '\0'; // Null terminate
 
-            printf("%.*s", (int)io_size, rsp_buff); // Print received data
+            printf("%.*s", (int)io_size, rsp_buff);
 
-            // TODO break on exit command
+            // Check if this is the last chunk (EOF character received)
             is_eof = (rsp_buff[io_size - 1] == RDSH_EOF_CHAR) ? 1 : 0;
             if (is_eof)
                 break;

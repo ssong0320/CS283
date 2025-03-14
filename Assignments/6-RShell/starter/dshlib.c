@@ -153,7 +153,7 @@ int execute_pipeline(command_list_t *clist)
     int num_commands = clist->num;
     int pipes[num_commands - 1][2];
     pid_t pids[num_commands];
-    int exit_status = 0; // Track if any command fails
+    int exit_status = 0;
 
     // Create pipes
     for (int i = 0; i < num_commands - 1; i++)
@@ -168,12 +168,6 @@ int execute_pipeline(command_list_t *clist)
     // Fork and execute each command in the pipeline
     for (int i = 0; i < num_commands; i++)
     {
-        if (clist->commands[i].argv[0] == NULL)
-        {
-            fprintf(stderr, "Error: Empty command detected\n");
-            return WARN_NO_CMDS;
-        }
-
         pids[i] = fork();
         if (pids[i] < 0)
         {
@@ -183,11 +177,22 @@ int execute_pipeline(command_list_t *clist)
 
         if (pids[i] == 0) // Child process
         {
-            // Set up input pipe (if not the first command)
+            // If it's the first process, read from STDIN (client socket)
+            if (i == 0)
+            {
+                dup2(STDIN_FILENO, STDIN_FILENO);
+            }
+
+            // If it's the last process, redirect stdout and stderr to client socket
+            if (i == num_commands - 1)
+            {
+                dup2(STDOUT_FILENO, STDOUT_FILENO);
+                dup2(STDERR_FILENO, STDERR_FILENO);
+            }
+
+            // Pipe handling for middle processes
             if (i > 0)
                 dup2(pipes[i - 1][0], STDIN_FILENO);
-
-            // Set up output pipe (if not the last command)
             if (i < num_commands - 1)
                 dup2(pipes[i][1], STDOUT_FILENO);
 
@@ -201,7 +206,7 @@ int execute_pipeline(command_list_t *clist)
             // Execute command
             execvp(clist->commands[i].argv[0], clist->commands[i].argv);
             perror("execvp failed");
-            exit(127); // Standard exit code for command not found
+            exit(127);
         }
     }
 
@@ -212,18 +217,18 @@ int execute_pipeline(command_list_t *clist)
         close(pipes[i][1]);
     }
 
-    // Wait for all child processes & track failures
+    // Wait for all child processes
     for (int i = 0; i < num_commands; i++)
     {
         int status;
         waitpid(pids[i], &status, 0);
         if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
         {
-            exit_status = WEXITSTATUS(status); // Track first failure
+            exit_status = WEXITSTATUS(status);
         }
     }
 
-    return exit_status; // Return non-zero if any command failed
+    return exit_status;
 }
 
 int build_cmd_list(char *cmd_line, command_list_t *clist)
